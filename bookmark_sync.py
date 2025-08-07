@@ -5,6 +5,7 @@ import plistlib
 import shutil
 from datetime import datetime
 
+
 def get_real_user_home():
     """
     Returns the real user's home directory, even when run with sudo.
@@ -12,7 +13,7 @@ def get_real_user_home():
     if 'SUDO_USER' in os.environ:
         return os.path.expanduser(f"~{os.environ['SUDO_USER']}")
     return os.path.expanduser('~')
-
+  
 # Paths
 HOME_DIR = get_real_user_home()
 SAFARI_BOOKMARKS = os.path.join(HOME_DIR, 'Library/Safari/Bookmarks.plist')
