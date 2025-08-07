@@ -18,7 +18,6 @@ HOME_DIR = get_real_user_home()
 SAFARI_BOOKMARKS = os.path.join(HOME_DIR, 'Library/Safari/Bookmarks.plist')
 CHROME_BOOKMARKS = os.path.join(HOME_DIR, 'Library/Application Support/Google/Chrome/Default/Bookmarks')
 BACKUP_DIR = os.path.join(HOME_DIR, 'Desktop/bookmark_sync_backups')
-
 def backup_file(path):
     os.makedirs(BACKUP_DIR, exist_ok=True)
     base = os.path.basename(path)
