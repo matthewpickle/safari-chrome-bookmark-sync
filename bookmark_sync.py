@@ -5,12 +5,20 @@ import plistlib
 import shutil
 from datetime import datetime
 
+
+def get_real_user_home():
+    """
+    Returns the real user's home directory, even when run with sudo.
+    """
+    if 'SUDO_USER' in os.environ:
+        return os.path.expanduser(f"~{os.environ['SUDO_USER']}")
+    return os.path.expanduser('~')
+  
 # Paths
-SAFARI_BOOKMARKS = os.path.expanduser('~/Library/Safari/Bookmarks.plist')
-CHROME_BOOKMARKS = os.path.expanduser('~/Library/Application Support/Google/Chrome/Default/Bookmarks')
-
-BACKUP_DIR = os.path.expanduser('~/Desktop/bookmark_sync_backups')
-
+HOME_DIR = get_real_user_home()
+SAFARI_BOOKMARKS = os.path.join(HOME_DIR, 'Library/Safari/Bookmarks.plist')
+CHROME_BOOKMARKS = os.path.join(HOME_DIR, 'Library/Application Support/Google/Chrome/Default/Bookmarks')
+BACKUP_DIR = os.path.join(HOME_DIR, 'Desktop/bookmark_sync_backups')
 def backup_file(path):
     os.makedirs(BACKUP_DIR, exist_ok=True)
     base = os.path.basename(path)
