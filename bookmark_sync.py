@@ -27,50 +27,66 @@ def backup_file(path):
     shutil.copy2(path, backup_path)
     print(f'Backup created: {backup_path}')
 
-def extract_safari_bookmarks(children_list):
+def extract_safari_bookmarks(children_list, parent_path=None):
     """
     Recursively extracts bookmarks and folders from Safari's plist data
     into a standardized format.
     """
     items = []
+    if parent_path is None:
+        parent_path = []
     for node in children_list:
         if node.get('WebBookmarkType') == 'WebBookmarkTypeLeaf':
             url = node.get('URLString')
             title = node.get('URIDictionary', {}).get('title', url)
             if url:
-                items.append({'type': 'url', 'title': title, 'url': url})
+                items.append({
+                    'type': 'url',
+                    'title': title,
+                    'url': url,
+                    'path': list(parent_path)
+                })
         elif node.get('WebBookmarkType') == 'WebBookmarkTypeList':
-            # This is a folder
             folder_name = node.get('Title', '')
-            # Reading List is a special folder we want to skip
             if folder_name == 'com.apple.ReadingList':
                 continue
             folder_children = node.get('Children', [])
             items.append({
                 'type': 'folder',
                 'name': folder_name,
-                'children': extract_safari_bookmarks(folder_children)
+                'path': list(parent_path),
+                'children': extract_safari_bookmarks(folder_children, parent_path + [folder_name])
             })
     return items
+    return items
 
-def extract_chrome_bookmarks(children_list):
+def extract_chrome_bookmarks(children_list, parent_path=None):
     """
     Recursively extracts bookmarks and folders from Chrome's JSON data
     into a standardized format.
     """
     items = []
+    if parent_path is None:
+        parent_path = []
     for node in children_list:
         if node.get('type') == 'url':
             url = node.get('url')
             title = node.get('name', url)
             if url:
-                items.append({'type': 'url', 'title': title, 'url': url})
+                items.append({
+                    'type': 'url',
+                    'title': title,
+                    'url': url,
+                    'path': list(parent_path)
+                })
         elif node.get('type') == 'folder':
+            folder_name = node.get('name', '')
             folder_children = node.get('children', [])
             items.append({
                 'type': 'folder',
-                'name': node.get('name', ''),
-                'children': extract_chrome_bookmarks(folder_children)
+                'name': folder_name,
+                'path': list(parent_path),
+                'children': extract_chrome_bookmarks(folder_children, parent_path + [folder_name])
             })
     return items
 
@@ -160,7 +176,7 @@ def main():
     print("Reading Safari bookmarks...")
     with open(SAFARI_BOOKMARKS, 'rb') as f:
         safari_data = plistlib.load(f)
-    safari_tree = extract_safari_bookmarks(safari_data.get('Children', []))
+    safari_tree = extract_safari_bookmarks(safari_data.get('Children', []), parent_path=[])
 
     # Read Chrome
     print("Reading Chrome bookmarks...")
@@ -168,7 +184,7 @@ def main():
         chrome_data = json.load(f)
     chrome_bar_children = chrome_data['roots']['bookmark_bar'].get('children', [])
     chrome_other_children = chrome_data['roots']['other'].get('children', [])
-    chrome_tree = extract_chrome_bookmarks(chrome_bar_children + chrome_other_children)
+    chrome_tree = extract_chrome_bookmarks(chrome_bar_children + chrome_other_children, parent_path=[])
 
     # Merge the two bookmark trees
     print("Merging bookmark trees...")
